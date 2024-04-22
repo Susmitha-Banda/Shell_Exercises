@@ -1,0 +1,53 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+extern char **environ;
+
+int _unsetenv(const char *name) {
+    if (name == NULL || name[0] == '\0' || strchr(name, '=') != NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    // Find the index of the variable
+    int index = -1;
+    char **env = environ;
+    int i = 0;
+    while (*env != NULL) {
+        char *pos = strchr(*env, '=');
+        if (pos != NULL) {
+            if (strncmp(*env, name, pos - *env) == 0 && name[pos - *env] == '\0') {
+                index = i;
+                break;
+            }
+        }
+        env++;
+        i++;
+    }
+
+    // If variable exists, delete it
+    if (index != -1) {
+        free(environ[index]); // Free the memory of the environment variable
+        // Shift the remaining environment variables to fill the gap
+        while (environ[index + 1] != NULL) {
+            environ[index] = environ[index + 1];
+            index++;
+        }
+        environ[index] = NULL; // Set the last element to NULL
+    }
+
+    return 0;
+}
+
+int main() {
+    // Test the _unsetenv function
+    _unsetenv("MY_VAR");
+
+    // Print the updated environment
+    char **env = environ;
+    while (*env != NULL) {
+        printf("%s\n", *env);
+        env++;
+  
+
